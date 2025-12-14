@@ -50,3 +50,10 @@ Just in case you accidentally saved the VM here
 *.vbox
 *.vbox-prev
 *.log
+
+# Rust Build Artifacts
+target/
+src/cartesian-core/src-tauri/target/
+**/*.rs.bk
+Cargo.lock
+
