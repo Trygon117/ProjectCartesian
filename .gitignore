@@ -1,0 +1,52 @@
+--- RUST & TAURI ---
+
+/target
+/src-tauri/target
+**/*.rs.bk
+Cargo.lock
+
+--- NODE / TYPESCRIPT ---
+
+node_modules/
+dist/
+build/
+.env
+.env.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+--- PYTHON ---
+
+pycache/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+.env
+*.egg-info/
+
+--- ARCH ISO BUILDER (Important) ---
+
+Prevents uploading the temporary build files (can be 10GB+)
+
+iso/archiso_profile/work/
+iso/archiso_profile/out/
+*.iso
+
+--- IDE / EDITOR SETTINGS ---
+
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+--- VIRTUAL MACHINES ---
+
+Just in case you accidentally saved the VM here
+
+*.vdi
+*.vbox
+*.vbox-prev
+*.log
