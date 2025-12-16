@@ -1,0 +1,14 @@
+[package]
+name = "cartesian-core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# The GUI Library
+iced = { version = "0.13", features = ["canvas", "tokio"] }
+
+# System Monitoring
+sysinfo = "0.30"
+
+# Async Runtime (Required for Iced's background tasks)
+tokio = { version = "1", features = ["full"] }

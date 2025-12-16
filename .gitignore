@@ -1,59 +1,37 @@
---- RUST & TAURI ---
-
-/target
-/src-tauri/target
+# --- RUST (Cartesian Core) ---
+# Ignore build artifacts in the new location
+src/cartesian-core/target/
 **/*.rs.bk
-Cargo.lock
 
---- NODE / TYPESCRIPT ---
+# Note: We keep Cargo.lock for binaries to ensure reproducible builds.
+# Do not ignore Cargo.lock unless you have a specific reason.
 
-node_modules/
-dist/
-build/
-.env
-.env.local
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# --- ARCH PACKAGING (pkg folder) ---
+# Keep PKGBUILD and scripts, but ignore makepkg runtime folders
+pkg/src/
+pkg/pkg/
+pkg/*.pkg.tar.zst
+pkg/*.log
 
---- PYTHON ---
+# --- LOCAL REPOSITORY ---
+# Ignore the binary package repo we created
+repo/
 
-pycache/
-*.py[cod]
-*$py.class
-venv/
-.venv/
-.env
-*.egg-info/
-
---- ARCH ISO BUILDER (Important) ---
-
-Prevents uploading the temporary build files (can be 10GB+)
-
-iso/archiso_profile/work/
-iso/archiso_profile/out/
+# --- ARCH ISO BUILDER ---
+# Massive temporary build files
+iso/work/
+iso/out/
 *.iso
 
---- IDE / EDITOR SETTINGS ---
-
+# --- IDE / EDITOR SETTINGS ---
 .vscode/
 .idea/
 *.swp
 *.swo
 .DS_Store
 
---- VIRTUAL MACHINES ---
-
-Just in case you accidentally saved the VM here
-
+# --- VIRTUAL MACHINES ---
 *.vdi
 *.vbox
 *.vbox-prev
 *.log
-
-# Rust Build Artifacts
-target/
-src/cartesian-core/src-tauri/target/
-**/*.rs.bk
-Cargo.lock
-
