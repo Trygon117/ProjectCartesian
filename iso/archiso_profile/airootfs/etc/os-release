@@ -1,0 +1,10 @@
+NAME="Project Cartesian"
+PRETTY_NAME="Project Cartesian (Factory Build)"
+ID=cartesian
+ID_LIKE=arch
+BUILD_ID=rolling
+ANSI_COLOR="0;36"
+HOME_URL="https://github.com/project-cartesian"
+SUPPORT_URL="https://github.com/project-cartesian/issues"
+BUG_REPORT_URL="https://github.com/project-cartesian/issues"
+LOGO=archlinux-logo

@@ -22,6 +22,11 @@ repo/
 iso/work/
 iso/out/
 *.iso
+iso/local_repo/
+
+# Config backups created during build injection
+*.bak
+iso/archiso_profile/pacman.conf.bak
 
 # --- IDE / EDITOR SETTINGS ---
 .vscode/
