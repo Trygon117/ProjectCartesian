@@ -1,0 +1,16 @@
+[build]
+# Limit parallel jobs to avoid freezing the VM during heavy compilation
+# Assuming 2-4 cores allocated to VM; adjustment here prevents 100% host saturation.
+jobs = 2
+
+# Use the system linker explicitly for stability
+linker = "gcc"
+
+[term]
+# Ensure we get nice colored output in Kitty
+color = "always"
+
+[net]
+# Increases retry count for flaky VM networking/shared folder access
+retry = 3
+git-fetch-with-cli = true

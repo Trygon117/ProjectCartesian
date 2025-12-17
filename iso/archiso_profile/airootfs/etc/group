@@ -1,0 +1,6 @@
+root:x:0:
+sys:x:3:
+wheel:x:10:root,cartesian
+nobody:x:65534:
+vboxsf:x:980:cartesian
+cartesian:x:1000:
