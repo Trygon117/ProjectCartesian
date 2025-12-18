@@ -1,4 +1,5 @@
 # Maintainer: Cartesian Dev <your_email>
+
 pkgname=cartesian-core
 pkgver=0.1.0
 pkgrel=1
@@ -6,9 +7,12 @@ pkgdesc="AI System Manager for Cartesian OS (Native Iced)"
 arch=('x86_64')
 url="https://github.com/your-repo/project-cartesian"
 license=('MIT')
-# Iced Dependencies: Wayland, Vulkan, XKB (Keyboard), Polkit
+
+# Runtime dependencies
 depends=('glibc' 'gcc-libs' 'wayland' 'libxkbcommon' 'vulkan-icd-loader' 'polkit')
-makedepends=('cargo')
+
+# We no longer need cargo as a makedepend inside makepkg because build.sh handles it
+makedepends=()
 
 source=("cartesian-admin.sh"
         "org.cartesian.policy"
@@ -17,28 +21,17 @@ sha256sums=('SKIP'
             'SKIP'
             'SKIP')
 
-_project_root="cartesian-core"
-
-prepare() {
-    echo "Copying local source code..."
-    # We assume src/cartesian-core is now the clean Iced project
-    cp -r "$startdir/../src/cartesian-core" "$srcdir/"
-}
-
-build() {
-    cd "$srcdir/$_project_root"
-    # Pure Rust build. No npm, no tauri.
-    cargo build --release
-}
+# We skip the build() function entirely to avoid redundant compilation.
+# build.sh performs the compilation before calling makepkg.
 
 package() {
     # 1. Install Binary
-    cd "$srcdir/$_project_root"
-    install -Dm755 "target/release/cartesian-core" "$pkgdir/usr/bin/cartesian-core"
+    # We pull directly from the source directory where build.sh just placed the release binary
+    install -Dm755 "$startdir/../src/cartesian-core/target/release/cartesian-core" "$pkgdir/usr/bin/cartesian-core"
 
     # 2. Install Sidecar Files (Admin Scripts)
-    cd "$srcdir"
-    install -Dm755 "cartesian-admin.sh" "$pkgdir/usr/bin/cartesian-admin"
-    install -Dm644 "org.cartesian.policy" "$pkgdir/usr/share/polkit-1/actions/org.cartesian.policy"
-    install -Dm644 "50-cartesian.rules" "$pkgdir/usr/share/polkit-1/rules.d/50-cartesian.rules"
+    # These are sourced from the 'pkg' directory where the PKGBUILD lives
+    install -Dm755 "$srcdir/cartesian-admin.sh" "$pkgdir/usr/bin/cartesian-admin"
+    install -Dm644 "$srcdir/org.cartesian.policy" "$pkgdir/usr/share/polkit-1/actions/org.cartesian.policy"
+    install -Dm644 "$srcdir/50-cartesian.rules" "$pkgdir/usr/share/polkit-1/rules.d/50-cartesian.rules"
 }

@@ -58,7 +58,7 @@ impl Cartesian {
         Task::none()
     }
 
-    fn view(&self) -> Element<Message> {
+    fn view(&self) -> Element<'_, Message> {
         // Sci-Fi Colors
         let text_color = if self.is_detected {
             iced::Color::from_rgb8(255, 123, 114) // Red

@@ -12,22 +12,30 @@ IF %ERRORLEVEL% NEQ 0 (
     exit /b
 )
 
+REM Ensure logs directory exists
+if not exist "logs\build" mkdir "logs\build"
+
 echo [1/2] Building the Builder Container...
 docker build -t cartesian-builder -f iso/Dockerfile .
 
 echo.
 echo [2/2] Running Build Sequence...
-echo NOTE: This requires --privileged mode to mount loop devices for the ISO.
+echo NOTE: Persistent volumes are used for Rust 'target' and Arch 'repo'.
 echo.
 
-REM -v mounts the current folder (%cd%) to /project_cartesian inside the box
-REM --privileged is required for mkarchiso to work
-REM --rm deletes the container after it finishes (clean up)
+REM -v "%cd%":/project_cartesian -> Main source mount
+REM -v "%cd%\logs\build":/project_cartesian/logs/build -> Persistent logs
+REM --privileged -> Required for mkarchiso loop devices
 
-docker run --privileged --rm -v "%cd%":/project_cartesian cartesian-builder
+docker run --privileged --rm ^
+    -v "%cd%":/project_cartesian ^
+    -v "%cd%\src\cartesian-core\target":/project_cartesian/src/cartesian-core/target ^
+    cartesian-builder
 
 echo.
 echo ==========================================
-echo   Build Complete. Check iso/out/ folder.
+echo   Build Sequence Finished.
+echo   Check iso/out/ for the ISO.
+echo   Check logs/build/ for build details.
 echo ==========================================
 pause

@@ -1,10 +1,25 @@
-# Use the official Arch Linux base image
 FROM archlinux:latest
 
-# Added lsof to the dependencies
-RUN pacman -Sy --noconfirm && \
-    pacman -S --noconfirm archiso git python3 make dos2unix grub efibootmgr lsof
+# Update system and install build AND runtime dependencies
+RUN pacman -Syu --noconfirm \
+    base-devel \
+    rust \
+    cargo \
+    archiso \
+    dos2unix \
+    grub \
+    efibootmgr \
+    git \
+    sudo \
+    wayland \
+    libxkbcommon \
+    vulkan-icd-loader \
+    polkit
+
+# --- SECURITY & PACKAGING PROTOCOL ---
+RUN useradd -m builder && \
+    echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 WORKDIR /project_cartesian
 
-CMD ["/bin/bash", "-c", "echo 'Running mandatory CRLF sanitization...'; dos2unix ./iso/build.sh; dos2unix ./iso/archiso_profile/profiledef.sh; dos2unix ./iso/archiso_profile/pacman.conf; find ./iso/archiso_profile -type f -print0 | xargs -0 dos2unix; echo 'Sanitization complete. Starting build.'; ./iso/build.sh"]
+ENTRYPOINT ["/bin/bash", "-c", "chown -R builder:builder /project_cartesian && dos2unix /project_cartesian/iso/build.sh && sudo -u builder /bin/bash /project_cartesian/iso/build.sh"]

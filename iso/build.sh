@@ -1,144 +1,95 @@
 #!/bin/bash
 
-# Exit on error immediately
+# Exit on error
 set -e
 
-# Get directory of this script
+# Path Resolution
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# Resolve paths
 PROJECT_ROOT="$(realpath "$SCRIPT_DIR/..")"
-REPO_DIR="$(realpath "$PROJECT_ROOT/repo")"
-PKG_DIR="$(realpath "$PROJECT_ROOT/pkg")"
-PROFILE_DIR="$(realpath "$SCRIPT_DIR/archiso_profile")"
+SRC_DIR="$PROJECT_ROOT/src/cartesian-core"
+PKG_DIR="$PROJECT_ROOT/pkg"
+REPO_DIR="$PROJECT_ROOT/repo/x86_64"
+PROFILE_DIR="$SCRIPT_DIR/archiso_profile"
+LOG_DIR="$PROJECT_ROOT/logs/build"
+LOG_FILE="$LOG_DIR/latest_build.log"
 
-# Local directory for the build repo
-BUILD_REPO_DIR="$SCRIPT_DIR/local_repo"
-HTTP_PORT="8050"
-
-# --- NEW: Internal Linux Temporary Paths for Performance/Stability (War Story Fix) ---
+# Internal mkarchiso temps
 TEMP_WORK_DIR="/tmp/mkarchiso_work"
 TEMP_OUT_DIR="/tmp/mkarchiso_out"
 
-echo "=== PROJECT CARTESIAN ISO BUILDER ==="
+mkdir -p "$LOG_DIR"
+echo "--- Build Started $(date) ---" > "$LOG_FILE"
 
-# --- NEW: PRE-FLIGHT CLEANUP ---
-# This addresses the user's issue where an interrupted build leaves 
-# lock files or mounted loop devices that prevent new builds.
-function pre_build_cleanup {
-    echo "🔍 Running pre-flight cleanup..."
-    
-    # 1. Clear internal temp directories if they exist from a crashed run
-    if [ -d "$TEMP_WORK_DIR" ]; then
-        echo "   -> Removing stale work directory: $TEMP_WORK_DIR"
-        rm -rf "$TEMP_WORK_DIR" || (echo "      ⚠️ Failed to remove work dir. Check permissions." && exit 1)
-    fi
-    
-    # 2. Check for port 8050 usage
-    P_PID=$(lsof -t -i:$HTTP_PORT || true)
-    if [ -n "$P_PID" ]; then
-        echo "   -> Port $HTTP_PORT is occupied by PID $P_PID. Terminating..."
-        kill -9 "$P_PID" || true
-    fi
-
-    # 3. Restore pacman.conf if a backup exists from a crashed run
-    if [ -f "$PROFILE_DIR/pacman.conf.bak" ]; then
-        echo "   -> Restoring pacman.conf from backup..."
-        mv "$PROFILE_DIR/pacman.conf.bak" "$PROFILE_DIR/pacman.conf"
-    fi
+function log {
+    echo ">> $1" | tee -a "$LOG_FILE"
 }
 
-# Run cleanup before starting
-pre_build_cleanup
-
-# --- CRITICAL PROTOCOL: CRLF Line Ending Fix ---
-echo "✅ Line ending sanitization handled by Docker entrypoint."
-
-
-# --- STEP 1: Repository Generation ---
-if [ -d "$REPO_DIR/x86_64" ]; then
-    echo "✅ Source repository found at: $REPO_DIR/x86_64"
-    SOURCE_PATH="$REPO_DIR/x86_64"
-else
-    echo "⚠️  Repository not found. Attempting to generate from 'pkg'..."
-    PKG_FOUND=$(find "$PKG_DIR" -maxdepth 1 -name "*.pkg.tar.zst" -print -quit)
-    if [ -n "$PKG_FOUND" ]; then
-        mkdir -p "$REPO_DIR/x86_64"
-        cp "$PKG_DIR"/*.pkg.tar.zst "$REPO_DIR/x86_64/"
-        echo "Generating Pacman Database..."
-        cd "$REPO_DIR/x86_64"
-        repo-add "cartesian.db.tar.gz" *.pkg.tar.zst
-        cd "$SCRIPT_DIR"
-        SOURCE_PATH="$REPO_DIR/x86_64"
-        echo "✅ Repository generated."
-    else
-        echo "❌ ERROR: No compiled packages found in $PKG_DIR"
-        exit 1
-    fi
-fi
-
-# --- STEP 2: Safe Build Environment & HTTP Server ---
-echo "Setting up local build repo at: $BUILD_REPO_DIR"
-if [ -d "$BUILD_REPO_DIR" ]; then rm -rf "$BUILD_REPO_DIR"; fi
-mkdir -p "$BUILD_REPO_DIR"
-cp -r -L "$SOURCE_PATH/." "$BUILD_REPO_DIR/"
-
-echo "🚀 Starting temporary HTTP repo server on port $HTTP_PORT..."
-python3 -m http.server "$HTTP_PORT" --directory "$BUILD_REPO_DIR" --bind 0.0.0.0 > /dev/null 2>&1 &
-SERVER_PID=$!
-sleep 2
-
-if kill -0 $SERVER_PID 2>/dev/null; then
-    echo "Server running with PID: $SERVER_PID"
-else
-    echo "❌ Server failed to start!"
-    exit 1
-fi
-
-# --- STEP 3: Config Injection & Execution ---
-cp "$PROFILE_DIR/pacman.conf" "$PROFILE_DIR/pacman.conf.bak"
-
-function cleanup {
-    echo ""
-    echo "🧹 Cleaning up..."
-    if kill -0 $SERVER_PID 2>/dev/null; then
-        echo "Stopping HTTP server (PID $SERVER_PID)..."
-        kill $SERVER_PID
-    fi
-    echo "Restoring original pacman.conf..."
-    if [ -f "$PROFILE_DIR/pacman.conf.bak" ]; then
-        mv "$PROFILE_DIR/pacman.conf.bak" "$PROFILE_DIR/pacman.conf"
-    fi
-    echo "Cleaning up internal mkarchiso work directory: $TEMP_WORK_DIR"
-    rm -rf "$TEMP_WORK_DIR"
+# --- PRE-FLIGHT ---
+function check_dependencies {
+    log "Checking build environment..."
+    local deps=("cargo" "rustc" "makepkg" "mkarchiso" "dos2unix")
+    for dep in "${deps[@]}"; do
+        if ! command -v "$dep" &> /dev/null; then
+            log "❌ ERROR: Required tool '$dep' not found."
+            exit 1
+        fi
+    done
 }
-trap cleanup EXIT
 
-sed -i '/^\[cartesian\]/,$d' "$PROFILE_DIR/pacman.conf.bak"
-cat >> "$PROFILE_DIR/pacman.conf.bak" <<EOF
+function sanitize_files {
+    log "Sanitizing line endings..."
+    # We do this QUIETLY to avoid log spam
+    find "$PKG_DIR" "$SCRIPT_DIR" -type f \( -name "*.sh" -o -name "PKGBUILD" -o -name "*.conf" -o -name "profiledef.sh" \) -exec dos2unix -q {} +
+}
 
-# --- INJECTED BY BUILD.SH ---
-[cartesian]
-SigLevel = Optional TrustAll
-Server = http://127.0.0.1:$HTTP_PORT
-EOF
+# --- STEP 1: PREPARE ---
+check_dependencies
+sanitize_files
 
-mv "$PROFILE_DIR/pacman.conf.bak" "$PROFILE_DIR/pacman.conf"
-echo "Starting mkarchiso..."
-cd "$SCRIPT_DIR"
+# --- STEP 2: COMPILATION ---
+function check_rebuild_required {
+    if [ ! -d "$REPO_DIR" ] || [ -z "$(ls -A "$REPO_DIR"/*.pkg.tar.zst 2>/dev/null)" ]; then
+        return 0
+    fi
+    LATEST_PKG=$(ls -t "$REPO_DIR"/*.pkg.tar.zst | head -n 1)
+    CHANGES=$(find "$SRC_DIR/src" -type f -newer "$LATEST_PKG" | wc -l)
+    [ "$CHANGES" -gt 0 ] && return 0 || return 1
+}
+
+if check_rebuild_required; then
+    log "🚀 Compiling & Packaging Cartesian Core..."
+    
+    cd "$SRC_DIR"
+    cargo build --release >> "$LOG_FILE" 2>&1
+    
+    cd "$PKG_DIR"
+    makepkg -f --noconfirm >> "$LOG_FILE" 2>&1
+    
+    mkdir -p "$REPO_DIR"
+    cp "$PKG_DIR"/*.pkg.tar.zst "$REPO_DIR/"
+    cd "$REPO_DIR"
+    repo-add "cartesian.db.tar.gz" *.pkg.tar.zst >> "$LOG_FILE" 2>&1
+    
+    log "✅ Compilation/Packaging Complete."
+fi
+
+# --- STEP 3: ISO GENERATION ---
+log "📀 Starting ISO Generation..."
+
+rm -rf "$TEMP_WORK_DIR"
 mkdir -p "$TEMP_OUT_DIR"
-mkarchiso -v -w "$TEMP_WORK_DIR" -o "$TEMP_OUT_DIR" "$PROFILE_DIR"
+cd "$SCRIPT_DIR"
 
-# --- STEP 4: Copy Result Back ---
-echo ""
-echo "=== Build Complete ==="
-GENERATED_ISO_TEMP_PATH=$(find "$TEMP_OUT_DIR" -maxdepth 1 -name "cartesian-*.iso" -print -quit)
-if [ -f "$GENERATED_ISO_TEMP_PATH" ]; then
-    FINAL_ISO_OUT_DIR="$SCRIPT_DIR/out"
-    mkdir -p "$FINAL_ISO_OUT_DIR"
-    cp "$GENERATED_ISO_TEMP_PATH" "$FINAL_ISO_OUT_DIR/"
-    FINAL_ISO_PATH="$FINAL_ISO_OUT_DIR/$(basename "$GENERATED_ISO_TEMP_PATH")"
-    echo "✅ SUCCESS: ISO generated successfully."
+# Standard mkarchiso run with output strictly to log file
+sudo mkarchiso -v -w "$TEMP_WORK_DIR" -o "$TEMP_OUT_DIR" "$PROFILE_DIR" >> "$LOG_FILE" 2>&1
+
+# --- STEP 4: EXPORT ---
+GENERATED_ISO=$(find "$TEMP_OUT_DIR" -maxdepth 1 -name "cartesian-*.iso" -print -quit)
+if [ -f "$GENERATED_ISO" ]; then
+    mkdir -p "$SCRIPT_DIR/out"
+    sudo cp "$GENERATED_ISO" "$SCRIPT_DIR/out/"
+    log "✅ SUCCESS: ISO available in iso/out/$(basename "$GENERATED_ISO")"
 else
-    echo "⚠️  Build finished, but ISO was not found."
+    log "❌ ERROR: ISO generation failed. Check $LOG_FILE"
+    exit 1
 fi
