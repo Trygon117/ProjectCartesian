@@ -1,0 +1,48 @@
+/* * CartesianOS Waybar Style 
+ * Refactored to remove invalid // comments (Audit 4C)
+ */
+
+* {
+    border: none;
+    border-radius: 0;
+    font-family: "Noto Sans", "Roboto", "Helvetica", "Arial", sans-serif;
+    font-size: 13px;
+    min-height: 0;
+}
+
+window#waybar {
+    background: rgba(20, 20, 20, 0.9);
+    color: #ffffff;
+    transition-property: background-color;
+    transition-duration: .5s;
+    border-bottom: 2px solid rgba(33, 204, 255, 0.5); /* Cartesian Cyan */
+}
+
+#modules-left, #modules-center, #modules-right {
+    padding: 0 10px;
+}
+
+#clock {
+    color: #33ccff;
+    font-weight: bold;
+}
+
+#cpu, #memory, #battery {
+    padding: 0 10px;
+    margin: 4px 0;
+}
+
+#cpu {
+    color: #a6e3a1;
+}
+
+#memory {
+    color: #f9e2af;
+}
+
+/* AI Status Module Placeholder */
+#custom-ai {
+    color: #f38ba8;
+    font-weight: bold;
+    padding-left: 10px;
+}

@@ -1,0 +1,10 @@
+# /etc/fstab: static file system information.
+#
+# <file system>             <dir>         <type>    <options>                                                               <dump>  <pass>
+
+# Shared Folder for Cartesian Development
+# x-systemd.automount: Mounts automatically on first access.
+# x-systemd.idle-timeout=60: Unmounts after 60s of inactivity.
+# x-systemd.mount-timeout=10: Prevents boot hang if share is missing.
+
+cartesian_share             /home/cartesian/share  vboxsf    defaults,uid=1000,gid=1000,rw,nofail,x-systemd.automount,x-systemd.mount-timeout=10    0       0

@@ -1,9 +1,18 @@
+# ==============================================================================
+# CartesianOS Project Gitignore
+# Hardened to prevent Binary Leakage (Audit 4A) and tracking of build artifacts.
+# ==============================================================================
+
 # --- RUST (Cartesian Core) ---
-# Ignore build artifacts in the new location
+# Ignore build artifacts and backups
 src/cartesian-core/target/
 **/*.rs.bk
 
-# Cargo registry and git db (massive folders that should not be tracked)
+# Audit 4A Fix: Specifically block compiled binaries in source roots
+src/cartesian-core/main
+src/cartesian-core/cartesian-core
+
+# Cargo registry and git db (massive folders)
 .cargo/registry/
 .cargo/git/
 
@@ -26,6 +35,8 @@ iso/work/
 iso/out/
 *.iso
 iso/local_repo/
+iso/tmp/
+.archiso/
 
 # Config backups created during build injection
 *.bak
@@ -48,4 +59,12 @@ iso/archiso_profile/pacman.conf.bak
 *.vdi
 *.vbox
 *.vbox-prev
+
+# --- LOGS & DIAGNOSTICS ---
+logs/
 *.log
+
+# --- GENERIC BINARY ARTIFACTS ---
+*.so
+*.a
+*.o

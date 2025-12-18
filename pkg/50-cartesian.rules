@@ -1,6 +1,27 @@
+/* * CartesianOS Polkit Rules
+ * Logic for handling Safe vs. Admin macro tiers.
+ * * Hierarchy:
+ * 1. Safe (org.cartesian.safe.*) -> Silent YES for 'wheel' group.
+ * 2. Admin (org.cartesian.admin.*) -> Requires AUTH_ADMIN (Password prompt).
+ */
+
 polkit.addRule(function(action, subject) {
-    if (action.id == "org.cartesian.manage" &&
-        subject.isInGroup("wheel")) {
-        return polkit.Result.YES;
+    // Check if the user is in the 'wheel' group (standard Arch admin group)
+    var isWheel = subject.isInGroup("wheel");
+
+    if (isWheel) {
+        // Tier 1: Safe actions (Telemetry/Monitoring)
+        // These are allowed without a password prompt to avoid breaking AI flow.
+        if (action.id.indexOf("org.cartesian.safe.") === 0) {
+            return polkit.Result.YES;
+        }
+
+        // Tier 2: Admin actions (Lobotomy/Leash/System Modification)
+        // These require authentication to ensure the user is aware of 
+        // high-privilege system changes. 
+        // Result.AUTH_ADMIN_KEEP caches the auth for a short duration.
+        if (action.id.indexOf("org.cartesian.admin.") === 0) {
+            return polkit.Result.AUTH_ADMIN_KEEP;
+        }
     }
 });

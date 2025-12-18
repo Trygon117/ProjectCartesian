@@ -4,10 +4,25 @@
  "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
 <policyconfig>
   <vendor>Cartesian OS</vendor>
-  <vendor_url>https://github.com/your-repo/project-cartesian</vendor_url>
-  <action id="org.cartesian.manage">
+  <vendor_url>https://github.com/Trygon117/ProjectCartesian</vendor_url>
+
+  <!-- Safe Tier: Monitoring and Vision -->
+  <action id="org.cartesian.safe.monitor">
+    <description>Access system telemetry and vision buffers</description>
+    <message>System optimization requires telemetry access</message>
+    <defaults>
+      <allow_any>yes</allow_any>
+      <allow_inactive>yes</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/bin/cartesian-admin</annotate>
+    <annotate key="org.freedesktop.policykit.exec.argv1">telemetry</annotate>
+  </action>
+
+  <!-- Admin Tier: Resource Control (Lobotomy/Leash) -->
+  <action id="org.cartesian.admin.manage">
     <description>Manage AI Process Resources</description>
-    <message>Authentication is required to manage Cartesian AI resources</message>
+    <message>Authentication is required to suspend or throttle AI agents</message>
     <defaults>
       <allow_any>auth_admin</allow_any>
       <allow_inactive>auth_admin</allow_inactive>
@@ -15,4 +30,5 @@
     </defaults>
     <annotate key="org.freedesktop.policykit.exec.path">/usr/bin/cartesian-admin</annotate>
   </action>
+
 </policyconfig>
