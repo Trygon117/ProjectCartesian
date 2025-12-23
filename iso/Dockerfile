@@ -1,6 +1,7 @@
 FROM archlinux:latest
 
 # Update system and install build AND runtime dependencies
+# AUDIT FIX: Added 'gnupg' for package signing (Audit 2.4 dependency)
 RUN pacman -Syu --noconfirm \
     base-devel \
     rust \
@@ -14,7 +15,8 @@ RUN pacman -Syu --noconfirm \
     wayland \
     libxkbcommon \
     vulkan-icd-loader \
-    polkit
+    polkit \
+    gnupg
 
 # --- SECURITY & PACKAGING PROTOCOL ---
 RUN useradd -m builder && \
@@ -22,4 +24,6 @@ RUN useradd -m builder && \
 
 WORKDIR /project_cartesian
 
-ENTRYPOINT ["/bin/bash", "-c", "chown -R builder:builder /project_cartesian && dos2unix /project_cartesian/iso/build.sh && sudo -u builder /bin/bash /project_cartesian/iso/build.sh"]
+# AUDIT 4.1 FIX: Centralized Entrypoint
+# We ensure build.sh has correct line endings before executing.
+ENTRYPOINT ["/bin/bash", "-c", "dos2unix -q /project_cartesian/iso/build.sh && chown -R builder:builder /project_cartesian && sudo -u builder /bin/bash /project_cartesian/iso/build.sh"]

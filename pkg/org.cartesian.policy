@@ -11,8 +11,9 @@
     <description>Access system telemetry and vision buffers</description>
     <message>System optimization requires telemetry access</message>
     <defaults>
-      <allow_any>yes</allow_any>
-      <allow_inactive>yes</allow_inactive>
+      <!-- SECURITY FIX: Disable access for detached/inactive sessions -->
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
       <allow_active>yes</allow_active>
     </defaults>
     <annotate key="org.freedesktop.policykit.exec.path">/usr/bin/cartesian-admin</annotate>

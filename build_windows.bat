@@ -24,11 +24,17 @@ docker run --rm -v "%cd%":/work alpine sh -c "apk add --no-cache dos2unix && fin
 echo NOTE: Persistent volumes are used for Rust 'target' and Arch 'repo'.
 echo.
 
-REM -v "%cd%":/project_cartesian -> Main source mount
-REM -v "%cd%\logs\build":/project_cartesian/logs/build -> Persistent logs
-REM --privileged -> Required for mkarchiso loop devices
+REM SECURITY FIX (Audit 2.3): Replaced --privileged with granular capabilities.
+REM --cap-add SYS_ADMIN: Required for 'mount' commands in mkarchiso.
+REM --cap-add MKNOD: Required to create loop devices.
+REM --security-opt apparmor:unconfined: Prevents permission errors on loopback mounting.
+REM --device /dev/fuse: Often needed for user-space filesystems (optional but recommended).
 
-docker run --privileged --rm ^
+docker run --rm ^
+    --cap-add SYS_ADMIN ^
+    --cap-add MKNOD ^
+    --security-opt apparmor:unconfined ^
+    --device /dev/fuse ^
     -v "%cd%":/project_cartesian ^
     -v "%cd%\src\cartesian-core\target":/project_cartesian/src/cartesian-core/target ^
     cartesian-builder
