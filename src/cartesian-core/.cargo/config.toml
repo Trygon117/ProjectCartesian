@@ -1,0 +1,24 @@
+# CartesianOS Build-Time Cargo Configuration
+# Path: src/cartesian-core/.cargo/config.toml
+# Purpose: Optimizes the ISO generation process on the host/VM.
+
+[build]
+# Audit Item 3B: Use all available cores for build-time compilation.
+# We no longer hardcode jobs=2 here.
+# Cargo defaults to the number of logical CPUs.
+
+# Explicitly use system GCC for stability
+linker = "gcc"
+
+[target.x86_64-unknown-linux-gnu]
+# Prevents the "unused key" warning for linker in root build block
+linker = "gcc"
+
+[term]
+color = "always"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"

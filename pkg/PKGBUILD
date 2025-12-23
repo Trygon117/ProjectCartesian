@@ -1,36 +1,37 @@
-# Maintainer: Cartesian Dev <your_email>
+# Maintainer: Abraham Furlan <abrahamfurlan@gmail.com>
+# Project: CartesianOS
 
 pkgname=cartesian-core
 pkgver=0.1.0
 pkgrel=1
-pkgdesc="AI System Manager for Cartesian OS (Native Iced)"
+pkgdesc="AI System Manager for Cartesian OS (Native Rust/Iced Monolith)"
 arch=('x86_64')
-url="https://github.com/your-repo/project-cartesian"
+url="https://github.com/Trygon117/ProjectCartesian"
 license=('MIT')
 
-# Runtime dependencies
-depends=('glibc' 'gcc-libs' 'wayland' 'libxkbcommon' 'vulkan-icd-loader' 'polkit')
+# Runtime dependencies (Minimum required to run the Iced UI and Polkit bridge)
+depends=('glibc' 'gcc-libs' 'wayland' 'libxkbcommon' 'vulkan-icd-loader' 'polkit' 'pipewire')
 
-# We no longer need cargo as a makedepend inside makepkg because build.sh handles it
-makedepends=()
+# Build-time dependencies (Required for compilation, stripped from final ISO)
+# Move rust and cargo here to resolve Audit Item 4D
+makedepends=('rust' 'cargo')
 
 source=("cartesian-admin.sh"
         "org.cartesian.policy"
         "50-cartesian.rules")
-sha256sums=('SKIP'
-            'SKIP'
-            'SKIP')
 
-# We skip the build() function entirely to avoid redundant compilation.
-# build.sh performs the compilation before calling makepkg.
+# Audit Item 3D Fix: Use actual SHA256 hashes. 
+# RUN 'updpkgsums' in the pkg/ directory to populate these.
+sha256sums=('ac2e9af787a1111582f04aee876cc61731ad59e421a933fe967741bd41a0817e'
+            'f382818df71877cdb5a71ad55fcffc7bd3b6e78fbe05869bf6ffa3d0af12cffb'
+            '2742e5fcf27c2fe7a5f8b639e5fb27e454f943dc55501973a89c230ae9f75ce3')
 
 package() {
     # 1. Install Binary
-    # We pull directly from the source directory where build.sh just placed the release binary
+    # build.sh compiles this into the target/release directory before makepkg is called.
     install -Dm755 "$startdir/../src/cartesian-core/target/release/cartesian-core" "$pkgdir/usr/bin/cartesian-core"
 
-    # 2. Install Sidecar Files (Admin Scripts)
-    # These are sourced from the 'pkg' directory where the PKGBUILD lives
+    # 2. Install Sidecar Files (The Admin Bridge)
     install -Dm755 "$srcdir/cartesian-admin.sh" "$pkgdir/usr/bin/cartesian-admin"
     install -Dm644 "$srcdir/org.cartesian.policy" "$pkgdir/usr/share/polkit-1/actions/org.cartesian.policy"
     install -Dm644 "$srcdir/50-cartesian.rules" "$pkgdir/usr/share/polkit-1/rules.d/50-cartesian.rules"

@@ -138,6 +138,7 @@ neovim
 xorg-xwayland
 xdg-desktop-portal-hyprland
 wofi
+mousepad
 rust
 cargo
 gcc

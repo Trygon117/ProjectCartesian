@@ -20,6 +20,7 @@ docker build -t cartesian-builder -f iso/Dockerfile .
 
 echo.
 echo [2/2] Running Build Sequence...
+docker run --rm -v "%cd%":/work alpine sh -c "apk add --no-cache dos2unix && find /work/iso/archiso_profile -type f -exec dos2unix {} +"
 echo NOTE: Persistent volumes are used for Rust 'target' and Arch 'repo'.
 echo.
 

@@ -1,3 +1,13 @@
+# ==============================================================================
+# CartesianOS Sudoers Configuration
+# Refactored for Redundancy (Audit Item 5C)
+# ==============================================================================
+
+# Standard root access
 root ALL=(ALL:ALL) ALL
+
+# Allow members of group wheel to execute any command
 %wheel ALL=(ALL:ALL) ALL
+
+# Cartesian user permissions
 cartesian ALL=(ALL) NOPASSWD: /usr/bin/mkdir, /usr/bin/mount

@@ -1,6 +1,7 @@
-root:x:0:
-sys:x:3:
+root:x:0:root
 wheel:x:10:root,cartesian
-nobody:x:65534:
-vboxsf:x:980:cartesian
+audio:x:995:cartesian
+video:x:986:cartesian
+storage:x:988:cartesian
+users:x:985:cartesian
 cartesian:x:1000:
