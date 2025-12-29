@@ -5,10 +5,10 @@ edition = "2021"
 
 [dependencies]
 # The GUI Library
-iced = { version = "0.13", features = ["canvas", "tokio"] }
+iced = { version = "0.14", features = ["canvas", "tokio"] }
 
 # System Monitoring
-sysinfo = "0.30"
+sysinfo = "0.37"
 
 # Async Runtime
 tokio = { version = "1", features = ["full"] }
@@ -19,7 +19,7 @@ memmap2 = "0.9"
 # --- THE MIND (Hippocampus & Brain) ---
 
 # Generic Parsing
-regex = "1.10"
+regex = "1.12"
 
 # Compression
 zstd = "0.13"
@@ -29,11 +29,10 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
 # Machine Learning (Embeddings)
-candle-core = "0.3"
-candle-nn = "0.3"
-candle-transformers = "0.3"
-tokenizers = "0.15"
+candle-core = "0.9"
+candle-nn = "0.9"
+candle-transformers = "0.9"
+tokenizers = "0.22"
 
 # LLM Inference (Chat)
-# llama-cpp-2 provides safe bindings to the C++ library
 llama-cpp-2 = "0.1"

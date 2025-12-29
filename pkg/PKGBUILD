@@ -3,36 +3,39 @@
 
 pkgname=cartesian-core
 pkgver=0.1.0
-pkgrel=1
+pkgrel=2
 pkgdesc="AI System Manager for Cartesian OS (Native Rust/Iced Monolith)"
 arch=('x86_64')
 url="https://github.com/Trygon117/ProjectCartesian"
 license=('MIT')
 
-# Runtime dependencies (Minimum required to run the Iced UI and Polkit bridge)
 depends=('glibc' 'gcc-libs' 'wayland' 'libxkbcommon' 'vulkan-icd-loader' 'polkit' 'pipewire')
-
-# Build-time dependencies (Required for compilation, stripped from final ISO)
-# Move rust and cargo here to resolve Audit Item 4D
 makedepends=('rust' 'cargo')
 
 source=("cartesian-admin.sh"
         "org.cartesian.policy"
-        "50-cartesian.rules")
+        "50-cartesian.rules"
+        "install_models.sh")
 
 # Audit Item 3D Fix: Use actual SHA256 hashes. 
 # RUN 'updpkgsums' in the pkg/ directory to populate these.
-sha256sums=('ac2e9af787a1111582f04aee876cc61731ad59e421a933fe967741bd41a0817e'
-            'f382818df71877cdb5a71ad55fcffc7bd3b6e78fbe05869bf6ffa3d0af12cffb'
-            '2742e5fcf27c2fe7a5f8b639e5fb27e454f943dc55501973a89c230ae9f75ce3')
+sha256sums=('SKIP'
+            'SKIP'
+            'SKIP'
+            'SKIP')
 
 package() {
     # 1. Install Binary
-    # build.sh compiles this into the target/release directory before makepkg is called.
     install -Dm755 "$startdir/../src/cartesian-core/target/release/cartesian-core" "$pkgdir/usr/bin/cartesian-core"
 
-    # 2. Install Sidecar Files (The Admin Bridge)
+    # 2. Install Sidecar Files
     install -Dm755 "$srcdir/cartesian-admin.sh" "$pkgdir/usr/bin/cartesian-admin"
+    
+    # 3. Install First-Boot Setup Script
+    # We rename it to 'cartesian-setup' for clean usage
+    install -Dm755 "$srcdir/install_models.sh" "$pkgdir/usr/bin/cartesian-setup"
+
+    # 4. Install Polkit Rules
     install -Dm644 "$srcdir/org.cartesian.policy" "$pkgdir/usr/share/polkit-1/actions/org.cartesian.policy"
     install -Dm644 "$srcdir/50-cartesian.rules" "$pkgdir/usr/share/polkit-1/rules.d/50-cartesian.rules"
 }

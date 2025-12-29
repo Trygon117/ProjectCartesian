@@ -7,7 +7,6 @@
 set -e
 
 # --- ERROR HANDLING & LOGGING ---
-# AUDIT FIX: Trap errors and show the log tail so the user isn't blind.
 function failure_handler {
     echo -e "\n\e[31m❌ BUILD FAILED: The script encountered an error on line $1.\e[0m"
     echo -e "\e[33m--- LAST 20 LINES OF LOG ($LOG_FILE) ---\e[0m"
@@ -79,9 +78,7 @@ function check_resources {
 function setup_gpg {
     log "🔐 Initializing Ephemeral GPG Key for Signing..."
     export GNUPGHOME="$(mktemp -d)"
-    
-    # FIX: ALWAYS Force initialization.
-    # We removed the 'smart check' because Docker keyrings are often ghosted/broken.
+
     log "Initializing system keyring (Wait ~10s)..."
     sudo rm -rf /etc/pacman.d/gnupg
     sudo pacman-key --init >> "$LOG_FILE" 2>&1
@@ -162,8 +159,6 @@ else
     log "⏭️ Source unchanged. Skipping compilation."
     log "✍️ Re-signing existing artifacts with new key..."
     
-    # AUDIT FIX: We MUST resign the old packages because the GPG Key is new.
-    # Otherwise mkarchiso will reject them as 'invalid signature'.
     cd "$PKG_DIR"
     for pkg in *.pkg.tar.zst; do
         if [ -f "$pkg" ]; then
@@ -214,5 +209,7 @@ else
 fi
 
 # Final Cleanup
+echo -e "Performing final cleanup..."
+
 sudo rm -rf "$TEMP_WORK_DIR"
 rm -rf "$GNUPGHOME"

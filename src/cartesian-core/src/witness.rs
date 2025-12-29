@@ -1,14 +1,8 @@
 use std::fs::OpenOptions;
 use std::path::Path;
 use memmap2::MmapMut;
-use std::sync::atomic::{AtomicU8, Ordering};
+use crate::config;
 
-/// THE WITNESS (Vision System)
-/// Reads frames from the Shared Memory Ring Buffer created by the Root Daemon.
-
-const SHM_PATH: &str = "/dev/shm/cartesian_eye";
-
-// Offsets must match the Python/C++ Writer
 const OFF_STATUS: usize = 0;
 const OFF_WIDTH: usize = 4;
 const OFF_HEIGHT: usize = 8;
@@ -16,7 +10,6 @@ const OFF_FRAME_ID: usize = 16;
 const OFF_PIXELS: usize = 24;
 
 const STATUS_WRITING: u8 = 0;
-const STATUS_READY: u8 = 1;
 
 pub struct Eye {
     mmap: Option<MmapMut>,
@@ -38,11 +31,15 @@ impl Eye {
         }
     }
 
-    /// Connect to the Ring Buffer
     pub fn connect(&mut self) -> Result<(), String> {
-        let path = Path::new(SHM_PATH);
+        let path_str = config::get_shm_path();
+        let path = Path::new(&path_str);
+        
         if !path.exists() {
-            return Err("Witness: SHM file not found.".to_string());
+             if cfg!(target_os = "windows") {
+                 return Ok(()); 
+             }
+             return Err("Witness: SHM file not found.".to_string());
         }
 
         let file = OpenOptions::new()
@@ -59,7 +56,6 @@ impl Eye {
         Ok(())
     }
 
-    /// Poll for a new frame
     pub fn observe(&mut self) -> Option<VisualCortex> {
         if self.mmap.is_none() {
             let _ = self.connect();
@@ -68,21 +64,18 @@ impl Eye {
 
         let mmap = self.mmap.as_ref().unwrap();
 
-        // 1. Atomic Check (Is writer busy?)
         if mmap[OFF_STATUS] == STATUS_WRITING {
             return None;
         }
 
-        // 2. Read Metadata
         let width = u32::from_le_bytes(mmap[OFF_WIDTH..OFF_WIDTH+4].try_into().unwrap());
         let height = u32::from_le_bytes(mmap[OFF_HEIGHT..OFF_HEIGHT+4].try_into().unwrap());
         let frame_id = u64::from_le_bytes(mmap[OFF_FRAME_ID..OFF_FRAME_ID+8].try_into().unwrap());
 
         if frame_id <= self.last_frame_id {
-            return None; // No new data
+            return None; 
         }
 
-        // 3. Copy Data
         let expected_size = (width * height * 4) as usize;
         let end = OFF_PIXELS + expected_size;
         

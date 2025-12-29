@@ -16,7 +16,7 @@ export XDG_CURRENT_DESKTOP=Hyprland
 # 3. Standard Path
 export PATH="$PATH:$HOME/.local/bin:$HOME/.cargo/bin"
 
-# --- SMART VM DETECTION (Audit 3.1 & 3.2 Fix) ---
+# --- SMART VM DETECTION  ---
 # Logic: Check if we are in a VM. If so, enable compatibility flags.
 # If Native, do NOTHING (allow full hardware speed).
 
@@ -30,7 +30,7 @@ if systemd-detect-virt -q || hostnamectl status | grep -q "Chassis: vm"; then
     # 2. Fix Desktop Rendering (Hyprland)
     export WLR_RENDERER_ALLOW_SOFTWARE=1
     
-    # 3. FIX FOR KITTY / LAG (The new addition)
+    # 3. FIX FOR KITTY / LAG
     # Force applications (like Kitty) to use CPU rendering if GPU is flaky.
     # This prevents the "Kitty won't launch" OpenGL error.
     export LIBGL_ALWAYS_SOFTWARE=1

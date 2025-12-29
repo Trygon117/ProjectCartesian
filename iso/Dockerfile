@@ -16,7 +16,11 @@ RUN pacman -Syu --noconfirm \
     libxkbcommon \
     vulkan-icd-loader \
     polkit \
-    gnupg
+    gnupg \
+    fontconfig \
+    clang \
+    cmake \
+    pipewire
 
 # --- SECURITY & PACKAGING PROTOCOL ---
 RUN useradd -m builder && \

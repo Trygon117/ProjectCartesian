@@ -1,18 +1,18 @@
-use std::time::{Duration, Instant};
 use std::path::Path;
+use std::time::Instant;
 use llama_cpp_2::llama_backend::LlamaBackend;
 use llama_cpp_2::model::LlamaModel;
 use llama_cpp_2::model::params::LlamaModelParams;
-use crate::config; 
+use crate::config;
+use crate::schema::ActionSchema;
 
-// CANDLE IMPORTS (For Embeddings)
-use candle_core::{Tensor, Device};
-use candle_nn::VarBuilder;
-use candle_transformers::models::bert::{BertModel, Config as BertConfig, DTYPE};
+// CANDLE IMPORTS
+use candle_core::Device;
+use candle_transformers::models::bert::BertModel; 
 use tokenizers::Tokenizer;
 
-// --- THE GOVERNOR ---
-// (Unchanged logic, kept for context)
+// --- THE GOVERNOR (State Machine) ---
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum GovernorState {
     GodMode,         
@@ -83,7 +83,8 @@ impl Governor {
     }
 }
 
-// --- THE LLM ENGINE (Chat / Llama) ---
+// --- THE LLM ENGINE ---
+
 pub struct Engine {
     backend: LlamaBackend,
     model: Option<LlamaModel>,
@@ -122,7 +123,8 @@ impl Engine {
     }
 
     fn load_model(&mut self, model_name: &str, use_gpu: bool) {
-        let full_path = format!("{}{}", config::MODEL_DIR, model_name);
+        let base_dir = config::get_model_dir();
+        let full_path = format!("{}{}", base_dir, model_name);
         let path = Path::new(&full_path);
 
         if !path.exists() {
@@ -153,75 +155,54 @@ impl Engine {
         }
     }
     
+    pub fn infer_action(&self, _prompt: &str) -> Option<ActionSchema> {
+        if self.model.is_none() {
+            return None;
+        }
+        println!("Engine: Inference requested (Stub)");
+        None
+    }
+    
     pub fn current_model(&self) -> String {
         self.current_model_name.clone()
     }
 }
 
-// --- THE EMBEDDING ENGINE (Memory / Candle) ---
-// Runs on CPU using a small BERT model (all-MiniLM-L6-v2)
+// --- THE EMBEDDING ENGINE ---
 
 pub struct EmbeddingEngine {
-    model: Option<BertModel>,
-    tokenizer: Option<Tokenizer>,
+    _model: Option<BertModel>,
+    _tokenizer: Option<Tokenizer>,
     ready: bool,
 }
 
 impl EmbeddingEngine {
     pub fn new() -> Self {
-        // We load this lazily or on specific init to avoid boot delays
         Self {
-            model: None,
-            tokenizer: None,
+            _model: None,
+            _tokenizer: None,
             ready: false,
         }
     }
 
-    /// Loads the embedding model from disk.
-    /// This should be called in a background thread ideally.
     pub fn init(&mut self) -> Result<(), String> {
-        let model_path = format!("{}{}", config::MODEL_DIR, config::MODEL_EMBEDDING);
-        // Note: Candle usually requires a separate config.json and tokenizer.json
-        // For this implementation, we assume they are bundled or standard.
-        // In a real deployment, we'd path to those specifically.
+        let base_dir = config::get_model_dir();
+        let model_path = format!("{}{}", base_dir, config::MODEL_EMBEDDING);
         
-        // Pseudo-loading logic for Candle (simplified)
-        // 1. Load Device (CPU)
-        let device = Device::Cpu;
-        
-        // 2. Load Weights
-        // let vb = unsafe { VarBuilder::from_mmaped_safetensors(&[model_path], DTYPE, &device)? };
-        
-        // 3. Load Model
-        // let config = BertConfig::default();
-        // let model = BertModel::load(vb, &config)?;
-
-        // STUB: Real implementation requires the .safetensors file to exist.
-        // Setting ready=true for architecture testing.
+        let _device = Device::Cpu; 
         self.ready = true;
-        println!("EmbeddingEngine: Loaded (Stubbed for {:?}", model_path);
+        println!("EmbeddingEngine: Loaded (Stubbed for {:?})", model_path);
         Ok(())
     }
 
-    /// Generates a 384-dimensional vector for the given text.
     pub fn embed(&self, text: &str) -> Vec<f32> {
         if !self.ready {
-            // Return zero vector if not loaded
             return vec![0.0; 384];
         }
-
-        // TODO: Actual Candle Inference
-        // 1. Tokenize text
-        // 2. Forward pass through BertModel
-        // 3. Mean pooling of output
-        // 4. Normalize
-        
-        // For now, return a deterministic "fake" vector based on string length
-        // so we can test the Hippocampus logic without downloading 1GB weights
         let seed = text.len() as f32;
         let mut vec = Vec::with_capacity(384);
         for i in 0..384 {
-            vec.push((i as f32 * seed).sin()); // Deterministic noise
+            vec.push((i as f32 * seed).sin()); 
         }
         vec
     }

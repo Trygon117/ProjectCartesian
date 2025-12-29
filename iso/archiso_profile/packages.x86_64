@@ -128,3 +128,6 @@ gcc
 cartesian-core
 virtualbox-guest-utils
 open-vm-tools
+polkit
+polkit-gnome
+curl

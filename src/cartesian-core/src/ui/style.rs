@@ -2,28 +2,24 @@ use iced::{Color, Theme, Background, Border};
 use iced::widget::{container, text, Text};
 
 /// THE PALETTE
-/// Sci-Fi / Cyberpunk Color Scheme
 pub struct Palette;
 
 impl Palette {
-    // Base Tones
-    pub const BACKGROUND: Color = Color::from_rgb(0.05, 0.07, 0.09); // #0D1117
-    pub const SURFACE: Color = Color::from_rgb(0.09, 0.11, 0.13);    // #161B22
+    pub const BACKGROUND: Color = Color::from_rgb(0.05, 0.07, 0.09); 
+    pub const SURFACE: Color = Color::from_rgb(0.09, 0.11, 0.13);    
     pub const TEXT_MAIN: Color = Color::from_rgb(0.9, 0.9, 0.9);
-    pub const TEXT_DIM: Color = Color::from_rgb(0.55, 0.58, 0.62);   // #8B949E
+    pub const TEXT_DIM: Color = Color::from_rgb(0.55, 0.58, 0.62);   
 
-    // Status Indicators
-    pub const RED: Color = Color::from_rgb(1.0, 0.48, 0.45);     // Danger
-    pub const GREEN: Color = Color::from_rgb(0.22, 0.83, 0.33);  // Good
-    pub const BLUE: Color = Color::from_rgb(0.35, 0.65, 1.0);    // Info
-    pub const PURPLE: Color = Color::from_rgb(0.82, 0.66, 1.0);  // AI
-    pub const YELLOW: Color = Color::from_rgb(0.86, 0.67, 0.04); // Warning
-    pub const ORANGE: Color = Color::from_rgb(0.82, 0.60, 0.40); // Wait
+    pub const RED: Color = Color::from_rgb(1.0, 0.48, 0.45);
+    pub const GREEN: Color = Color::from_rgb(0.22, 0.83, 0.33);
+    pub const BLUE: Color = Color::from_rgb(0.35, 0.65, 1.0);
+    pub const PURPLE: Color = Color::from_rgb(0.82, 0.66, 1.0);
+    pub const YELLOW: Color = Color::from_rgb(0.86, 0.67, 0.04);
+    pub const ORANGE: Color = Color::from_rgb(0.82, 0.60, 0.40);
 }
 
 /// STYLE BUILDERS
 
-// The Main Window Background
 pub fn style_background(_theme: &Theme) -> container::Style {
     container::Style {
         background: Some(Background::Color(Palette::BACKGROUND)),
@@ -31,7 +27,6 @@ pub fn style_background(_theme: &Theme) -> container::Style {
     }
 }
 
-// The "Status Card" (Bordered Box)
 pub fn style_glass_card(accent: Color) -> impl Fn(&Theme) -> container::Style {
     move |_theme| container::Style {
         background: Some(Background::Color(Palette::SURFACE)),
@@ -45,11 +40,12 @@ pub fn style_glass_card(accent: Color) -> impl Fn(&Theme) -> container::Style {
 }
 
 /// WIDGET HELPERS
+/// FIXED: Changed 'impl Into<String>' to 'String' to satisfy Iced 0.13 traits.
 
-pub fn label_header(content: &str) -> Text {
+pub fn label_header(content: String) -> Text<'static> {
     text(content).size(14).color(Palette::TEXT_DIM)
 }
 
-pub fn label_main(content: &str, color: Color) -> Text {
+pub fn label_main(content: String, color: Color) -> Text<'static> {
     text(content).size(24).color(color)
 }

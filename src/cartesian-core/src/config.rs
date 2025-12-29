@@ -3,11 +3,27 @@ use std::time::Duration;
 /// GLOBAL CONFIGURATION
 /// The Single Source of Truth for Paths, Constants, and Tuning.
 
-// --- PATHS ---
-pub const MODEL_DIR: &str = "/usr/share/cartesian/models/";
+// --- PATHS (Cross-Platform) ---
+
+pub fn get_model_dir() -> String {
+    if cfg!(target_os = "windows") {
+        // On Windows, look in a local "models" folder next to the executable
+        ".\\models\\".to_string()
+    } else {
+        // On Linux, use the system standard
+        "/usr/share/cartesian/models/".to_string()
+    }
+}
+
+pub fn get_shm_path() -> String {
+    if cfg!(target_os = "windows") {
+        std::env::temp_dir().join("cartesian_eye").to_string_lossy().to_string()
+    } else {
+        "/dev/shm/cartesian_eye".to_string()
+    }
+}
+
 pub const REGISTRY_PATH: &str = "process_registry.json";
-pub const MEMORY_INDEX_PATH: &str = "hippocampus_index.bin";
-pub const SHM_PATH: &str = "/dev/shm/cartesian_eye";
 
 // --- MODELS ---
 pub const MODEL_GOD: &str = "gemma-9b-it.gguf";
@@ -19,36 +35,15 @@ pub const TICK_RATE: Duration = Duration::from_millis(500);
 pub const GOVERNOR_HYSTERESIS: Duration = Duration::from_secs(30);
 
 // --- HEURISTICS ---
-// Applications that trigger "Sidekick Mode" (Gaming)
 pub const GAMES: &[&str] = &[
-    "steam", 
-    "lutris", 
-    "heroic", 
-    "wineserver", 
-    "gamescope", 
-    "yuzu", 
-    "ryujinx",
-    "dota2",
-    "cs2",
-    "factorio"
+    "steam", "lutris", "heroic", "wineserver", "gamescope", 
+    "yuzu", "ryujinx", "dota2", "cs2", "factorio"
 ];
 
-// Applications that trigger "Conscientious Mode" (High VRAM)
 pub const CREATIVE_SUITE: &[&str] = &[
-    "blender",
-    "resolve", // DaVinci Resolve
-    "obs",
-    "gimp",
-    "krita",
-    "godot",
-    "unity"
+    "blender", "resolve", "obs", "gimp", "krita", "godot", "unity"
 ];
 
-// Applications that trigger "God Mode" (High CPU/Dev)
 pub const DEV_TOOLS: &[&str] = &[
-    "code", // VS Code
-    "zed",
-    "nvim",
-    "alacritty",
-    "cargo"
+    "code", "zed", "nvim", "alacritty", "cargo", "powershell", "cmd"
 ];

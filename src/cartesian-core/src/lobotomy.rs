@@ -1,31 +1,25 @@
-use sysinfo::{Pid, Process, System};
+use sysinfo::{Pid, System, ProcessesToUpdate};
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
-use crate::config; // Import Config
-
-/// THE REGISTRY
-/// Categorizes processes to determine User Context.
+use crate::config; 
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy, Eq, Hash)]
 pub enum AppCategory {
-    Game,        // High Priority: Steam, CS2 -> Sidekick Mode
-    Production,  // High VRAM: Blender, OBS -> Conscientious Mode
-    Development, // High CPU: VS Code, Cargo -> God Mode
-    Web,         // Low Priority: Firefox, Chrome
-    Media,       // Low Priority: Spotify, VLC
-    System,      // Ignored
-    Unknown,     // Needs AI Classification
+    Game,        
+    Production,  
+    Development, 
+    Web,         
+    Media,       
+    System,      
+    Unknown,     
 }
-
-// ... ProcessRecord struct ...
 
 pub struct SystemMonitor {
     sys: System,
     cached_pid: Option<Pid>,
     registry: HashMap<String, AppCategory>,
-    // Removed registry_path field, using config directly
 }
 
 impl SystemMonitor {
@@ -48,7 +42,6 @@ impl SystemMonitor {
                 }
             }
         }
-        // Defaults are now minimal, relying on Heuristics
         self.registry.insert("firefox".into(), AppCategory::Web);
     }
 
@@ -59,16 +52,16 @@ impl SystemMonitor {
     }
 
     pub fn get_system_context(&mut self) -> (AppCategory, Vec<String>) {
-        self.sys.refresh_processes();
+        self.sys.refresh_processes(ProcessesToUpdate::All, true);
         
         let mut active_categories = HashMap::new();
         let mut unknown_apps = Vec::new();
 
         for (_pid, process) in self.sys.processes() {
-            let name = process.name().to_lowercase();
+            // FIXED: Convert OsString to String immediately using lossy conversion
+            // This fixes E0599 (no method contains) and E0308 (mismatched types)
+            let name = process.name().to_string_lossy().to_ascii_lowercase();
             
-            // 1. Check Config Heuristics (Hardcoded Overrides)
-            // This ensures new games work even if not in JSON registry yet
             if config::GAMES.iter().any(|&g| name.contains(g)) {
                 *active_categories.entry(AppCategory::Game).or_insert(0) += 1;
                 continue;
@@ -82,7 +75,6 @@ impl SystemMonitor {
                 continue;
             }
 
-            // 2. Check JSON Registry
             match self.registry.get(&name) {
                 Some(cat) => {
                     *active_categories.entry(*cat).or_insert(0) += 1;
@@ -95,7 +87,6 @@ impl SystemMonitor {
             }
         }
 
-        // Determine Dominance
         let dominant = if active_categories.contains_key(&AppCategory::Game) {
             AppCategory::Game
         } else if active_categories.contains_key(&AppCategory::Production) {
@@ -109,20 +100,29 @@ impl SystemMonitor {
         (dominant, unknown_apps)
     }
 
-    // Pass-through
     pub fn get_vitals(&mut self) -> (f32, f32) {
-        self.sys.refresh_cpu();
+        self.sys.refresh_cpu_all();
         self.sys.refresh_memory();
-        let cpu = self.sys.global_cpu_info().cpu_usage();
+        let cpu = self.sys.global_cpu_usage();
         let ram = self.sys.available_memory() as f32 / 1_073_741_824.0;
         (cpu, ram)
     }
     
-    // Legacy pass-through
     pub fn find_process(&mut self, name: &str) -> Option<Pid> {
-        self.sys.refresh_processes();
+        if let Some(pid) = self.cached_pid {
+            self.sys.refresh_processes(ProcessesToUpdate::Some(&[pid]), true);
+            if self.sys.processes().contains_key(&pid) {
+                return Some(pid);
+            } else {
+                self.cached_pid = None; 
+            }
+        }
+
+        self.sys.refresh_processes(ProcessesToUpdate::All, true);
         for (pid, process) in self.sys.processes() {
-            if process.name().to_lowercase().contains(&name.to_lowercase()) {
+            // FIXED: name() -> to_string_lossy() -> to_ascii_lowercase
+            if process.name().to_string_lossy().to_ascii_lowercase().contains(&name.to_ascii_lowercase()) {
+                self.cached_pid = Some(*pid);
                 return Some(*pid);
             }
         }
