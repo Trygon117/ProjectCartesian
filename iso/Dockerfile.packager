@@ -1,0 +1,34 @@
+FROM archlinux:latest
+
+# Install ISO Tools & Runtime Dependencies
+# FIX: Added 'grub' and 'efibootmgr'. mkarchiso needs them to generate bootloaders.
+RUN pacman -Syu --noconfirm \
+    archiso \
+    base-devel \
+    git \
+    dos2unix \
+    rsync \
+    sudo \
+    gpgme \
+    wayland \
+    libxkbcommon \
+    vulkan-icd-loader \
+    polkit \
+    pipewire \
+    nvidia-utils \
+    rust \
+    cargo \
+    grub \
+    efibootmgr
+
+# Create Builder User (required for makepkg)
+RUN useradd -m builder && \
+    echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+WORKDIR /project_cartesian
+
+# FIX: Copy entrypoint from host instead of generating it with echo
+COPY iso/entrypoint_packager.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

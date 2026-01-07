@@ -16,22 +16,13 @@ use audio::Mixer;
 use ui::chat::ChatMessage;
 
 pub fn main() -> iced::Result {
-    // FIXED: Iced 0.14 application builder pattern
-    // 1. Pass the 'init' function (boot)
-    // 2. Pass update
-    // 3. Pass view
     iced::application(Cartesian::init, Cartesian::update, Cartesian::view)
         .subscription(Cartesian::subscription)
         .theme(Cartesian::theme)
-        .window(iced::window::Settings {
-            // Title is set here now
-            // But iced::application usually infers title from the window settings
-            ..Default::default()
-        })
+        .window(iced::window::Settings {..Default::default()})
         .run()
 }
 
-// ... Cartesian Struct (Unchanged) ...
 pub struct Cartesian {
     pub monitor: SystemMonitor,
     pub eye: Eye,
@@ -52,7 +43,6 @@ pub struct Cartesian {
     pub unknown_count: usize,
 }
 
-// ... Message Enum (Unchanged) ...
 #[derive(Debug, Clone)]
 pub enum Message {
     Tick,
@@ -62,8 +52,6 @@ pub enum Message {
 }
 
 impl Cartesian {
-    // FIXED: Changed from Default::default() to a proper init function returning (Self, Task)
-    // This matches the BootFn signature required by iced::application
     fn init() -> (Self, Task<Message>) {
         let mut embedder = EmbeddingEngine::new();
         let _ = embedder.init(); 
@@ -98,9 +86,6 @@ impl Cartesian {
     }
 
     fn update(&mut self, message: Message) -> Task<Message> {
-        // ... (Update Logic Unchanged) ...
-        // Note: For brevity, I'm not repeating the huge update block unless requested.
-        // It remains exactly as it was, just ensure the method signature matches.
         match message {
             Message::InputChanged(val) => {
                 self.input_value = val;
@@ -115,17 +100,31 @@ impl Cartesian {
                 });
                 self.input_value.clear();
                 
-                let response_text = if self.engine.current_model().contains("MISSING") {
-                    "Error: Neural weights not found in /usr/share/cartesian/models/".to_string()
+                // --- MULTIMODAL INFERENCE CALL ---
+                // 1. Grab visual context
+                let visual_context = self.eye.observe()
+                    .and_then(|cortex| cortex.to_dynamic_image());
+                
+                // 2. Infer Action
+                if let Some(action) = self.engine.infer_action(&user_msg, visual_context.as_ref()) {
+                    self.chat_history.push(ChatMessage {
+                        sender: "CARTESIAN".to_string(),
+                        content: action.user_message,
+                        timestamp: "Now".to_string(),
+                    });
                 } else {
-                    format!("I received: '{}'. (Inference Engine Stub)", user_msg)
-                };
-
-                self.chat_history.push(ChatMessage {
-                    sender: "CARTESIAN".to_string(),
-                    content: response_text,
-                    timestamp: "Now".to_string(),
-                });
+                    let error_msg = if self.engine.current_model().contains("MISSING") {
+                        "Error: Brain not found. Install Gemma 3 4B."
+                    } else {
+                        "Error: Inference failed."
+                    };
+                    
+                    self.chat_history.push(ChatMessage {
+                        sender: "SYSTEM".to_string(),
+                        content: error_msg.to_string(),
+                        timestamp: "Now".to_string(),
+                    });
+                }
             }
             Message::Tick => {
                 let (cpu, ram) = self.monitor.get_vitals();
@@ -136,16 +135,8 @@ impl Cartesian {
                 self.current_context = context;
                 self.unknown_count = unknowns.len();
                 
-                self.status = match self.current_context {
-                    AppCategory::Game => "CONTEXT: GAMING".to_string(),
-                    AppCategory::Production => "CONTEXT: CREATIVE".to_string(),
-                    AppCategory::Development => "CONTEXT: DEV".to_string(),
-                    _ => "CONTEXT: GENERAL".to_string(),
-                };
-
                 if self.debug_override {
                     self.current_context = AppCategory::Game;
-                    self.status = "SIMULATION: GAMING".to_string();
                 }
 
                 let is_gaming = self.current_context == AppCategory::Game;

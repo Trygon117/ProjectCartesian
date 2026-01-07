@@ -1,0 +1,10 @@
+# Ignore build artifacts
+
+src/cartesian-core/target
+pkg/*.pkg.tar.zst
+iso/out
+iso/work
+repo/x86_64
+logs
+.git
+.vscode

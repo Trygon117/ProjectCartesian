@@ -2,6 +2,7 @@ use std::fs::OpenOptions;
 use std::path::Path;
 use memmap2::MmapMut;
 use crate::config;
+use image::{DynamicImage, ImageBuffer, Rgba};
 
 const OFF_STATUS: usize = 0;
 const OFF_WIDTH: usize = 4;
@@ -21,6 +22,16 @@ pub struct VisualCortex {
     pub width: u32,
     pub height: u32,
     pub data: Vec<u8>,
+}
+
+impl VisualCortex {
+    /// Convert raw BGRA/RGBA bytes to a Rust Image
+    pub fn to_dynamic_image(&self) -> Option<DynamicImage> {
+        // Construct an ImageBuffer from the raw bytes
+        // Note: Linux DMA-BUF is often BGRA. If colors are swapped, change Rgba to Bgra.
+        ImageBuffer::<Rgba<u8>, Vec<u8>>::from_raw(self.width, self.height, self.data.clone())
+            .map(DynamicImage::ImageRgba8)
+    }
 }
 
 impl Eye {

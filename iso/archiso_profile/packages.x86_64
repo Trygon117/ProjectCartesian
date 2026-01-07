@@ -131,3 +131,5 @@ open-vm-tools
 polkit
 polkit-gnome
 curl
+firefox
+networkmanager

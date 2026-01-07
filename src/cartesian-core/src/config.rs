@@ -7,10 +7,8 @@ use std::time::Duration;
 
 pub fn get_model_dir() -> String {
     if cfg!(target_os = "windows") {
-        // On Windows, look in a local "models" folder next to the executable
         ".\\models\\".to_string()
     } else {
-        // On Linux, use the system standard
         "/usr/share/cartesian/models/".to_string()
     }
 }
@@ -26,8 +24,15 @@ pub fn get_shm_path() -> String {
 pub const REGISTRY_PATH: &str = "process_registry.json";
 
 // --- MODELS ---
-pub const MODEL_GOD: &str = "gemma-9b-it.gguf";
-pub const MODEL_SIDEKICK: &str = "gemma-2b-it.gguf";
+
+// DEFAULT: Gemma 3 4B (Optimized for 8GB-12GB GPUs)
+pub const MODEL_GOD: &str = "gemma-3-4b-it-q4_0.gguf";
+pub const MODEL_SIDEKICK: &str = "gemma-3-4b-it-q4_0.gguf";
+
+// The Vision Projector (The "Eyes")
+pub const MODEL_PROJECTOR: &str = "mmproj-model-f16-4B.gguf";
+
+// Embedding model for memory
 pub const MODEL_EMBEDDING: &str = "all-MiniLM-L6-v2.safetensors"; 
 
 // --- TUNING ---

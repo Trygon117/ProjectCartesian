@@ -1,0 +1,30 @@
+# ==========================================
+# STAGE 1: THE COMPILER
+# ==========================================
+
+FROM nvidia/cuda:12.6.3-devel-ubuntu24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install Ubuntu Dependencies
+RUN apt-get update && apt-get install -y \
+    curl build-essential pkg-config git dos2unix rsync cmake clang \
+    libssl-dev \
+    libwayland-dev \
+    libxkbcommon-dev \
+    libvulkan-dev \
+    libpipewire-0.3-dev \
+    libclang-dev \
+    libfontconfig1-dev
+
+# Install Rust (Latest Stable) via Rustup
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+WORKDIR /project_cartesian
+
+# FIX: Copy entrypoint from host
+COPY iso/entrypoint_compiler.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
