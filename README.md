@@ -1,7 +1,9 @@
 # CartesianOS: Biomimetic Orchestration for Local AI
 
-> **Status:** Research Prototype / Active
+> **Status:** Research Prototype / Paused Development
+
 > **Architecture:** Pure Rust Monolith (Candle + Iced)
+
 > **Core Models:** Google Gemma 3 (9B), Moondream2
 
 ## 1. Abstract
