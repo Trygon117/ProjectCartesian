@@ -68,7 +68,7 @@ The `audio.rs` module acts as a virtual mixing console, managing distinct virtua
 
 ## 4. Current Status
 
-**Status:** *Active Development*
+**Status:** *Paused Development*
 
 The project has transitioned from a hybrid Python/Rust prototype to a fully native Rust application. The inference engine has been migrated from `llama.cpp` bindings to **Candle**, enabling finer control over tensor operations and model loading. The **Hippocampus** has been upgraded to v2.1 with biological features like Spreading Activation and Long-Term Potentiation.
 
